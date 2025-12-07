@@ -12,7 +12,7 @@ public class ProducerService
     {
         var config = new ProducerConfig
         {
-            BootstrapServers = "kafka:9092",
+            BootstrapServers = "localhost:9092",
             AllowAutoCreateTopics = true,
             Acks = Acks.All
         };
