@@ -27,14 +27,15 @@
       context: .
       dockerfile: UserCore/Dockerfile
     ports:
-      - "9091:9091"
+      - "5005:5005"
     networks:
       - nutrition
     depends_on:
       - postgres_user
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: "http://+:9091"
+      ASPNETCORE_URLS: "http://+:5005"
+      ConnectionStrings__PostgreSql: "Host=postgres_user;Port=5432;Database=Nutrition;Username=root;Password=admin;Include Error Detail=true"
   
   zookeeper:
     image: confluentinc/cp-zookeeper
