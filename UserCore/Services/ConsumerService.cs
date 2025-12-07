@@ -14,7 +14,7 @@ public class ConsumerService(
     {
         var config = new ConsumerConfig
         {
-            BootstrapServers = "kafka:9092",
+            BootstrapServers = "localhost:9092",
             GroupId = "UserGroup",
             AutoOffsetReset = AutoOffsetReset.Earliest
         };

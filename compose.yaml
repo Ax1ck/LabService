@@ -91,9 +91,9 @@
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: admin
-      POSTGRES_DB: Autodealer
+      POSTGRES_DB: Nutrition
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - nutrition
     volumes:

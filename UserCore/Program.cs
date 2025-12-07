@@ -31,9 +31,9 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
         
-builder.Services.AddSingleton<ProducerService>();      
-builder.Services.AddScoped<ConsumerService>();
-builder.Services.AddHostedService<ConsumerService>();
+//builder.Services.AddSingleton<ProducerService>();      
+//builder.Services.AddScoped<ConsumerService>();
+//builder.Services.AddHostedService<ConsumerService>();
 
 var app = builder.Build();
 
