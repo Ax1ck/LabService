@@ -1,0 +1,6 @@
+@NutritionCore_HostAddress = http://localhost:5133
+
+GET {{NutritionCore_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

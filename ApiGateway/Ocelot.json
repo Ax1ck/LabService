@@ -1,0 +1,86 @@
+{
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:9093"
+  },
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/Meals",
+      "UpstreamHttpMethod": ["GET"],
+      "DownstreamPathTemplate": "/Meals",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts":[
+        {
+          "Host": "localhost",
+          "Port": 9090
+        }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/Meals",
+      "UpstreamHttpMethod": ["POST", "PUT", "DELETE"],
+      "DownstreamPathTemplate": "/Meals",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts":[
+        {
+          "Host": "localhost",
+          "Port": 9090
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/Meals/{id}",
+      "UpstreamHttpMethod": ["GET"],
+      "DownstreamPathTemplate": "/Meals/{id}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 9090
+        }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/Meals/{id}",
+      "UpstreamHttpMethod": ["DELETE"],
+      "DownstreamPathTemplate": "/Meals/{id}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 9090
+        }
+      ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/login",
+      "UpstreamHttpMethod": ["Post"],
+      "DownstreamPathTemplate": "/login",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts":[
+        {
+          "Host": "localhost",
+          "Port": 9091
+        }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/register",
+      "UpstreamHttpMethod": ["Post"],
+      "DownstreamPathTemplate": "/register",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts":[
+        {
+          "Host": "localhost",
+          "Port": 9091
+        }
+      ]
+    }
+  ]
+}
