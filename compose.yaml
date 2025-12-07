@@ -99,6 +99,31 @@
       - nutrition
     volumes:
       - postgres_data:/var/lib/postgresql/data
+        
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9095:9090"      # Prometheus UI на localhost:9095
+    networks:
+      - nutrition
+    depends_on:
+      - nutritioncore
+      - usercore
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"      # Grafana UI на localhost:3000
+    networks:
+      - nutrition
+    depends_on:
+      - prometheus
   
 networks:
   kafka:
@@ -109,3 +134,5 @@ networks:
 volumes:
   postgres_data:
   mongo_data:
+    
+

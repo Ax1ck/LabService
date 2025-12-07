@@ -10,6 +10,7 @@ using UserCore.Interfaces.Repositories;
 using UserCore.Interfaces.Services;
 using UserCore.Repositories;
 using UserCore.Services;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,9 +55,15 @@ app.UseCookiePolicy(new CookiePolicyOptions
     Secure = CookieSecurePolicy.Always
 });
 
+// Сбор HTTP-метрик для всех запросов UserCore
+app.UseHttpMetrics();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Эндпоинт /metrics для Prometheus
+app.MapMetrics();
 
 app.Run();
