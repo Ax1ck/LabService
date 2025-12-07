@@ -4,6 +4,7 @@ using NutritionCore.Data;
 using NutritionCore.DTO;
 using NutritionCore.Services;
 using NutritionCore.Services.Caching;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,8 +53,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// ❶ Middleware, который собирает HTTP‑метрики (длительность, кол‑во, коды ответа)
+app.UseHttpMetrics();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+// ❷ Эндпоинт /metrics для Prometheus
+app.MapMetrics();
 
 app.MapControllers();
 

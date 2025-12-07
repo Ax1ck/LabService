@@ -10,15 +10,20 @@ using UserCore.Interfaces.Repositories;
 using UserCore.Interfaces.Services;
 using UserCore.Repositories;
 using UserCore.Services;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseUrls("http://0.0.0.0:9091");
 
+Console.WriteLine("CS: " + builder.Configuration.GetConnectionString("PostgreSql"));
+
+// Сервисы
 builder.Services.AddControllers();
 var configuration = builder.Configuration;
 builder.Services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
-builder.Services.AddApiAuthentication(builder.Services.BuildServiceProvider().GetRequiredService<IOptions<JwtOptions>>());
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddApiAuthentication(
+    builder.Services.BuildServiceProvider().GetRequiredService<IOptions<JwtOptions>>());
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -30,14 +35,13 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
-        
-builder.Services.AddSingleton<ProducerService>();      
+
+builder.Services.AddSingleton<ProducerService>();
 builder.Services.AddScoped<ConsumerService>();
 builder.Services.AddHostedService<ConsumerService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -45,7 +49,7 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigration();
 }
 
-//app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseCookiePolicy(new CookiePolicyOptions
 {
@@ -54,9 +58,19 @@ app.UseCookiePolicy(new CookiePolicyOptions
     Secure = CookieSecurePolicy.Always
 });
 
+// routing + метрики
+app.UseRouting();
+
+app.UseHttpMetrics();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapMetrics();
+    endpoints.MapGet("/ping", () => Results.Ok("pong"));
+});
 
 app.Run();
