@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "monitoring", "monitoring", 
 		monitoring\prometheus.yml = monitoring\prometheus.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogService", "CatalogService\CatalogService.csproj", "{A8EF03DA-85BA-4B63-B462-4C9519A1FCBA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,5 +42,9 @@ Global
 		{D02FC532-924A-485A-A4D4-6D0A44E3E8C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D02FC532-924A-485A-A4D4-6D0A44E3E8C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D02FC532-924A-485A-A4D4-6D0A44E3E8C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8EF03DA-85BA-4B63-B462-4C9519A1FCBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8EF03DA-85BA-4B63-B462-4C9519A1FCBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8EF03DA-85BA-4B63-B462-4C9519A1FCBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8EF03DA-85BA-4B63-B462-4C9519A1FCBA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
