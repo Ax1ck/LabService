@@ -5,6 +5,7 @@ using NutritionCore.DTO;
 using NutritionCore.Services;
 using NutritionCore.Services.Caching;
 using Prometheus;
+using NutritionCore.GraphQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,11 @@ builder.Services.AddScoped<ProducerService>();
 builder.Services.AddScoped<ConsumerService>();
 builder.Services.AddHostedService<ConsumerService>();
 
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<MealQueries>()
+    .AddMutationType<MealMutations>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -63,5 +69,8 @@ app.MapControllers();
 
 // Эндпоинт /metrics для Prometheus
 app.MapMetrics();
+
+// Эндпоинт GraphQL
+app.MapGraphQL("/graphql");
 
 app.Run();

@@ -14,25 +14,7 @@ services:
     image: "nutritioncore:dev"
     ports: []
     volumes:
-    - "C:\\Users\\dima_\\.nuget\\packages:/home/app/.nuget/packages"
     - "C:\\Users\\dima_\\OneDrive\\Desktop\\Лабы\\ProperNutrition\\NutritionCore:/app:rw"
     - "C:\\Users\\dima_\\OneDrive\\Desktop\\Лабы\\ProperNutrition:/src:rw"
-    working_dir: "/app"
-  usercore:
-    build:
-      context: "C:\\Users\\dima_\\OneDrive\\Desktop\\Лабы\\ProperNutrition"
-      dockerfile: "UserCore/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/UserCore.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "usercore:dev"
-    ports: []
-    volumes:
     - "C:\\Users\\dima_\\.nuget\\packages:/home/app/.nuget/packages"
-    - "C:\\Users\\dima_\\OneDrive\\Desktop\\Лабы\\ProperNutrition\\UserCore:/app:rw"
-    - "C:\\Users\\dima_\\OneDrive\\Desktop\\Лабы\\ProperNutrition:/src:rw"
     working_dir: "/app"
