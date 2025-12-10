@@ -1,0 +1,559 @@
+﻿# ===== Namespace =====
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: labservice
+---
+# ===== MongoDB =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  namespace: labservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_DATABASE
+              value: "Nutrition"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  namespace: labservice
+spec:
+  selector:
+    app: mongo
+  ports:
+    - port: 27017
+      targetPort: 27017
+---
+# ===== Redis =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: labservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis
+          args: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: labservice
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+# ===== PostgreSQL для UserCore =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-user
+  namespace: labservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-user
+  template:
+    metadata:
+      labels:
+        app: postgres-user
+    spec:
+      containers:
+        - name: postgres-user
+          image: postgres
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "root"
+            - name: POSTGRES_PASSWORD
+              value: "admin"
+            - name: POSTGRES_DB
+              value: "Nutrition"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-user
+  namespace: labservice
+spec:
+  selector:
+    app: postgres-user
+  ports:
+    - port: 5432        # этот порт будем использовать в строке подключения
+      targetPort: 5432
+---
+# ===== Zookeeper =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+  namespace: labservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: confluentinc/cp-zookeeper
+          ports:
+            - containerPort: 2181
+          env:
+            - name: ZOOKEEPER_CLIENT_PORT
+              value: "2181"
+            - name: ZOOKEEPER_TICK_TIME
+              value: "2000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper
+  namespace: labservice
+spec:
+  selector:
+    app: zookeeper
+  ports:
+    - port: 2181
+      targetPort: 2181
+---
+# ===== Kafka =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: labservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka
+          ports:
+            - containerPort: 9092
+          env:
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "zookeeper:2181"
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: labservice
+spec:
+  selector:
+    app: kafka
+  ports:
+    - port: 9092
+      targetPort: 9092
+---
+# ===== NutritionCore (2 реплики) =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nutritioncore
+  namespace: labservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nutritioncore
+  template:
+    metadata:
+      labels:
+        app: nutritioncore
+    spec:
+      containers:
+        - name: nutritioncore
+          image: nutritioncore
+
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9090
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://+:9090"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nutritioncore
+  namespace: labservice
+spec:
+  selector:
+    app: nutritioncore
+  ports:
+    - port: 9090
+      targetPort: 9090
+---
+# ===== UserCore (2 реплики) =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: usercore
+  namespace: labservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: usercore
+  template:
+    metadata:
+      labels:
+        app: usercore
+    spec:
+      containers:
+        - name: usercore
+          image: usercore
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5005
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5005"
+            - name: ConnectionStrings__PostgreSql
+              value: "Host=postgres-user;Port=5432;Database=Nutrition;Username=root;Password=admin;Include Error Detail=true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: usercore
+  namespace: labservice
+spec:
+  selector:
+    app: usercore
+  ports:
+    - port: 5005
+      targetPort: 5005
+---
+# ===== Ocelot ApiGateway (2 реплики) =====
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apigateway-ocelot
+  namespace: labservice
+data:
+  Ocelot.json: |
+    {
+      "GlobalConfiguration": {
+        "BaseUrl": "http://apigateway:9093"
+      },
+      "Routes": [
+        {
+          "UpstreamPathTemplate": "/Meals",
+          "UpstreamHttpMethod": [ "GET" ],
+          "DownstreamPathTemplate": "/Meals",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [
+            { "Host": "nutritioncore", "Port": 9090 }
+          ]
+        },
+        {
+          "UpstreamPathTemplate": "/Meals",
+          "UpstreamHttpMethod": [ "POST", "PUT", "DELETE" ],
+          "DownstreamPathTemplate": "/Meals",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [
+            { "Host": "nutritioncore", "Port": 9090 }
+          ],
+          "AuthenticationOptions": {
+            "AuthenticationProviderKey": "Bearer",
+            "AllowedScopes": []
+          }
+        },
+        {
+          "UpstreamPathTemplate": "/Meals/{id}",
+          "UpstreamHttpMethod": [ "GET" ],
+          "DownstreamPathTemplate": "/Meals/{id}",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [
+            { "Host": "nutritioncore", "Port": 9090 }
+          ]
+        },
+        {
+          "UpstreamPathTemplate": "/Meals/{id}",
+          "UpstreamHttpMethod": [ "DELETE" ],
+          "DownstreamPathTemplate": "/Meals/{id}",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [
+            { "Host": "nutritioncore", "Port": 9090 }
+          ],
+          "AuthenticationOptions": {
+            "AuthenticationProviderKey": "Bearer"
+          }
+        },
+        {
+          "UpstreamPathTemplate": "/login",
+          "UpstreamHttpMethod": [ "POST" ],
+          "DownstreamPathTemplate": "/login",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [
+            { "Host": "usercore", "Port": 5005 }
+          ]
+        },
+        {
+          "UpstreamPathTemplate": "/register",
+          "UpstreamHttpMethod": [ "POST" ],
+          "DownstreamPathTemplate": "/register",
+          "DownstreamScheme": "http",
+          "DownstreamHostAndPorts": [
+            { "Host": "usercore", "Port": 5005 }
+          ]
+        }
+      ]
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apigateway
+  namespace: labservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: apigateway
+  template:
+    metadata:
+      labels:
+        app: apigateway
+    spec:
+      containers:
+        - name: apigateway
+          image: apigateway
+          imagePullPolicy: IfNotPresent
+          ports:
+
+            - containerPort: 9093
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://+:9093"
+          volumeMounts:
+            - name: ocelot-config
+              mountPath: /app/Ocelot.json
+              subPath: Ocelot.json
+      volumes:
+        - name: ocelot-config
+          configMap:
+            name: apigateway-ocelot
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apigateway
+  namespace: labservice
+spec:
+  selector:
+    app: apigateway
+  ports:
+    - port: 9093
+      targetPort: 9093
+---
+# ===== Prometheus (конфиг + деплой + сервис) =====
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: labservice
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 5s
+    scrape_configs:
+    - job_name: "nutritioncore"
+      metrics_path: /metrics
+      static_configs:
+        - targets: ["nutritioncore:9090"]
+    - job_name: "usercore"
+      metrics_path: /metrics
+      static_configs:
+        - targets: ["usercore:5005"]
+    - job_name: "node"
+      static_configs:
+        - targets: ["node-exporter:9100"]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: labservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: labservice
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+---
+# ===== Grafana =====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: labservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: labservice
+spec:
+  selector:
+    app: grafana
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+# ===== Node Exporter (метрики нод кластера) =====
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: labservice
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      hostNetwork: true
+      hostPID: true
+      containers:
+        - name: node-exporter
+          image: prom/node-exporter:v1.8.1
+          args:
+            - '--path.rootfs=/host'
+          ports:
+            - name: metrics
+              containerPort: 9100
+              hostPort: 9100
+          volumeMounts:
+            - name: rootfs
+              mountPath: /host
+              readOnly: true
+      volumes:
+        - name: rootfs
+          hostPath:
+            path: /
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-exporter
+  namespace: labservice
+spec:
+  selector:
+    app: node-exporter
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: 9100
+
+
