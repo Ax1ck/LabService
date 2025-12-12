@@ -4,6 +4,7 @@ using NutritionCore.DTO;
 using NutritionCore.Entities;
 using NutritionCore.Services;
 using NutritionCore.Services.Caching;
+using Prometheus;
 
 namespace NutritionCore.Controllers;
 
@@ -12,6 +13,21 @@ namespace NutritionCore.Controllers;
 public class MealsController(IMealService mealService, IRedisCacheService cache, ProducerService producer)
     : ControllerBase
 {
+    private static readonly Counter MealsCounter =
+        Metrics.CreateCounter(
+            "meals_total",
+            "Total number of meals");
+
+    private static readonly Counter MealsFailedCounter =
+        Metrics.CreateCounter(
+            "meals_Failed_total",
+            "Total number of failed meals");
+    
+    private static readonly Histogram RegistrationDuration =
+        Metrics.CreateHistogram(
+            "post_duration_seconds",
+            "duration POST in seconds");
+    
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Meal>?>> GetAll()
     {
@@ -51,8 +67,21 @@ public class MealsController(IMealService mealService, IRedisCacheService cache,
     //[Authorize]
     public async Task<IActionResult> Create(MealDto meal, CancellationToken token)
     {
-        var createdMeal = await mealService.Create(meal, token);
-        return CreatedAtAction(nameof(GetById), new { id = createdMeal.Id }, createdMeal);
+        using (RegistrationDuration.NewTimer())
+        {
+
+            try
+            {
+                var createdMeal = await mealService.Create(meal, token);
+                MealsCounter.Inc();
+                return CreatedAtAction(nameof(GetById), new { id = createdMeal.Id }, createdMeal);
+            }
+            catch (Exception)
+            {
+                MealsFailedCounter.Inc();
+                throw;
+            }
+        }
     }
 
     [HttpPut]
