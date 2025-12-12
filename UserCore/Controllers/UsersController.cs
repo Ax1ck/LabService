@@ -2,6 +2,7 @@
 using UserCore.DTOs;
 using UserCore.Entities;
 using UserCore.Interfaces.Services;
+using Prometheus;
 
 namespace UserCore.Controllers;
 
@@ -9,17 +10,40 @@ namespace UserCore.Controllers;
 [Route("[controller]")]
 public class UsersController(IUserService service) : ControllerBase
 {
+    // всего успешных регистраций
+    private static readonly Counter RegistrationTotal =
+        Metrics.CreateCounter(
+            "usercore_registration_total",
+            "Total number of successfully registered users");
+
+    // всего неудачных регистраций
+    private static readonly Counter RegistrationFailedTotal =
+        Metrics.CreateCounter(
+            "usercore_registration_failed_total",
+            "Total number of failed user registration attempts");
+
+    // длительность операции регистрации
+    private static readonly Histogram RegistrationDuration =
+        Metrics.CreateHistogram(
+            "usercore_registration_duration_seconds",
+            "User registration duration in seconds");
+    
     [HttpPost("/register")]
     public async Task<IActionResult> Register(RegisterDto registerDto)
     {
-        try
+        using (RegistrationDuration.NewTimer())
         {
-            await service.Register(registerDto);
-            return Ok();
-        }
-        catch(Exception ex)
-        {
-            return BadRequest(ex.Message);
+            try
+            {
+                await service.Register(registerDto);
+                RegistrationTotal.Inc();
+                return Ok();
+            }
+            catch (Exception)
+            {
+                RegistrationFailedTotal.Inc();
+                throw;
+            }
         }
     }
 
